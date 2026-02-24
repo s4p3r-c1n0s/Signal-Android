@@ -28,6 +28,8 @@ class MenuStateAccessibilityContractTest {
     assertFalse(menuState.shouldShowCopyAction())
     assertTrue(menuState.shouldShowDeleteAction())
     assertTrue(menuState.shouldShowReactions())
+    assertFalse(menuState.shouldShowPinMessage())
+    assertFalse(menuState.showShowUnpinMessage())
   }
 
   @Test
@@ -55,13 +57,15 @@ class MenuStateAccessibilityContractTest {
       scenario.recipient,
       scenario.selectedParts,
       scenario.shouldShowMessageRequest,
-      scenario.isNonAdminInAnnouncementGroup
+      scenario.isNonAdminInAnnouncementGroup,
+      scenario.canEditGroupInfo
     )
   }
 
   private fun buildSingleMessageScenario(
     shouldShowMessageRequest: Boolean = false,
     isNonAdminInAnnouncementGroup: Boolean = false,
+    canEditGroupInfo: Boolean = false,
     isSenderBlocked: Boolean = false
   ): Scenario {
     val sender = mockk<Recipient>(relaxed = true).apply {
@@ -100,7 +104,8 @@ class MenuStateAccessibilityContractTest {
       conversationMessage = conversationMessage,
       selectedParts = setOf(part),
       shouldShowMessageRequest = shouldShowMessageRequest,
-      isNonAdminInAnnouncementGroup = isNonAdminInAnnouncementGroup
+      isNonAdminInAnnouncementGroup = isNonAdminInAnnouncementGroup,
+      canEditGroupInfo = canEditGroupInfo
     )
   }
 
@@ -109,6 +114,7 @@ class MenuStateAccessibilityContractTest {
     val conversationMessage: ConversationMessage,
     val selectedParts: Set<MultiselectPart>,
     val shouldShowMessageRequest: Boolean,
-    val isNonAdminInAnnouncementGroup: Boolean
+    val isNonAdminInAnnouncementGroup: Boolean,
+    val canEditGroupInfo: Boolean
   )
 }
