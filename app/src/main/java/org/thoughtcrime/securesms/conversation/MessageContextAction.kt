@@ -70,6 +70,26 @@ enum class MessageContextAction(
     accessibilityActionId = R.id.conversation_message_accessibility_delete_action,
     labelRes = R.string.conversation_selection__menu_delete,
     iconRes = CoreUiR.drawable.symbol_trash_24
+  ),
+  PIN(
+    accessibilityActionId = R.id.conversation_message_accessibility_pin_action,
+    labelRes = R.string.conversation_selection__menu_pin_message,
+    iconRes = R.drawable.symbol_pin_24
+  ),
+  UNPIN(
+    accessibilityActionId = R.id.conversation_message_accessibility_unpin_action,
+    labelRes = R.string.conversation_selection__menu_unpin_message,
+    iconRes = R.drawable.symbol_pin_slash_24
+  ),
+  STAR(
+    accessibilityActionId = R.id.conversation_message_accessibility_star_action,
+    labelRes = R.string.conversation_selection__menu_star,
+    iconRes = R.drawable.symbol_star_outline_24
+  ),
+  UNSTAR(
+    accessibilityActionId = R.id.conversation_message_accessibility_unstar_action,
+    labelRes = R.string.conversation_selection__menu_unstar,
+    iconRes = R.drawable.symbol_star_outline_24
   );
 
   companion object {

@@ -45,7 +45,6 @@ public final class ConversationReactionDelegate {
   {
     resolveOverlay().show(activity, conversationRecipient, conversationMessage, lastSeenDownPoint, shouldShowMessageRequest, isNonAdminInAnnouncementGroup, selectedConversationModel, canEditGroupInfo);
   }
-  }
 
   public void hide() {
     overlayStub.get().hide();

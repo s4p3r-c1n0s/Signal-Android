@@ -2847,6 +2847,22 @@ class ConversationFragment :
         handleDeleteMessages(conversationMessage.multiselectCollection.toSet())
         true
       }
+      MessageContextAction.PIN -> {
+        handlePinMessage(conversationMessage)
+        true
+      }
+      MessageContextAction.UNPIN -> {
+        handleUnpinMessage(conversationMessage.messageRecord.id)
+        true
+      }
+      MessageContextAction.STAR -> {
+        handleStarMessages(setOf(conversationMessage.messageRecord.id))
+        true
+      }
+      MessageContextAction.UNSTAR -> {
+        handleUnstarMessages(setOf(conversationMessage.messageRecord.id))
+        true
+      }
     }
   }
 

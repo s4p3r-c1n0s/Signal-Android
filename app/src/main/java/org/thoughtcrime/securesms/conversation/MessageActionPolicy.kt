@@ -12,6 +12,7 @@ data class MessageActionPolicyContext(
   val conversationMessage: ConversationMessage,
   val shouldShowMessageRequest: Boolean,
   val isNonAdminInAnnouncementGroup: Boolean,
+  val canEditGroupInfo: Boolean,
   val isActionModeStarted: Boolean,
   val hasSelection: Boolean
 )
@@ -65,9 +66,23 @@ object MessageActionPolicy {
       actions += MessageContextAction.END_POLL
     }
 
-    if (menuState.shouldShowDeleteAction()) {
-      actions += MessageContextAction.DELETE
+    if (menuState.shouldShowPinMessage()) {
+      actions += MessageContextAction.PIN
     }
+
+    if (menuState.shouldShowUnpinMessage()) {
+      actions += MessageContextAction.UNPIN
+    }
+
+    if (menuState.shouldShowStarMessage()) {
+      actions += MessageContextAction.STAR
+    }
+
+    if (menuState.shouldShowUnstarMessage()) {
+      actions += MessageContextAction.UNSTAR
+    }
+
+    actions += MessageContextAction.DELETE
 
     return actions
   }
@@ -86,7 +101,8 @@ object MessageActionPolicy {
       context.recipient,
       context.conversationMessage.multiselectCollection.toSet(),
       context.shouldShowMessageRequest,
-      context.isNonAdminInAnnouncementGroup
+      context.isNonAdminInAnnouncementGroup,
+      context.canEditGroupInfo
     )
   }
 }

@@ -679,7 +679,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
   private @NonNull List<ActionItem> getMenuActionItems(@NonNull ConversationMessage conversationMessage) {
     MessageActionPolicyContext context = new MessageActionPolicyContext(conversationRecipient,
                                                                         conversationMessage,
-                                                                        shouldShowMessageRequest,
+                                                                        false,
                                                                         isNonAdminInAnnouncementGroup,
                                                                         canEditGroupInfo,
                                                                         false,
@@ -703,7 +703,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
       @Override
       public void startHide(@Nullable View focusedView) {
         if (onHideListener != null) {
-          onHideListener.startHide(action == Action.VIEW_INFO ? null : focusedView);
+          onHideListener.startHide(action == MessageContextAction.VIEW_INFO ? null : focusedView);
         }
       }
 
