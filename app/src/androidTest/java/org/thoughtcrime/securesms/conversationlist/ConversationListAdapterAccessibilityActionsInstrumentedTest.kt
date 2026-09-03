@@ -64,7 +64,7 @@ class ConversationListAdapterAccessibilityActionsInstrumentedTest {
    * conversation list UI, enabling blind/low-vision users to navigate and manage conversations.
    */
   @Test
-  fun liveConversationRow_exposesActions_andSelectActionStartsSelectionMode() {
+  fun conversationRow_selectActionStartsSelectionMode() {
     val other = Recipient.resolved(harness.others.first())
     insertIncomingText(other, "conversation list accessibility test")
 

@@ -66,7 +66,7 @@ class ConversationMessageAccessibilityActionsInstrumentedTest {
    * conversation message UI, enabling blind/low-vision users to interact with messages.
    */
   @Test
-  fun liveMessage_exposesAccessibilityActions_andMultiSelectActionStartsActionMode() {
+  fun message_exposesAndAllowsAccessibilityActions() {
     val other = Recipient.resolved(harness.others.first())
     insertIncomingText(other, "conversation message accessibility test")
 
