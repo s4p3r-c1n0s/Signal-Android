@@ -25,6 +25,28 @@ import org.thoughtcrime.securesms.polls.PollRecord
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.util.RemoteConfig
 
+/**
+ * Unit test suite for [MenuState] action visibility logic.
+ *
+ * Verifies that [MenuState.getMenuState] correctly determines which message actions
+ * should be available based on message properties, recipient state, and permissions.
+ * Covers 29 test scenarios across all action types:
+ *
+ * - **Core Actions**: Forward, Reply, Details, Copy, Delete, Reactions
+ * - **Edit**: Own messages, others' messages, failed messages
+ * - **Save Attachment**: MMS vs SMS messages
+ * - **Resend**: Failed and pending messages
+ * - **Payment Details**: Payment notifications and tombstones
+ * - **Polls**: Poll termination by poll owner
+ * - **Pin/Unpin**: Group permissions, pin state
+ * - **Star/Unstar**: Feature flag and starred state
+ * - **Announcement Groups**: Admin vs non-admin restrictions
+ * - **Message Requests**: Reply restrictions
+ * - **Blocked Senders**: Reply restrictions
+ *
+ * Uses MockK to mock dependencies and test scenario builders to configure
+ * message state without needing actual database or UI interactions.
+ */
 class MenuStateAccessibilityContractTest {
 
   @Before
@@ -490,6 +512,19 @@ class MenuStateAccessibilityContractTest {
     )
   }
 
+  /**
+   * Encapsulates a complete test scenario for message action evaluation.
+   *
+   * Aggregates all mocked dependencies and context needed to evaluate [MenuState]
+   * action visibility. Used to pass test configuration to [getMenuState].
+   *
+   * @param recipient Mocked recipient (1-on-1 contact or group)
+   * @param conversationMessage Mocked conversation message wrapper
+   * @param selectedParts Set of multiselect parts (e.g., text or attachments)
+   * @param shouldShowMessageRequest Whether in message request state
+   * @param isNonAdminInAnnouncementGroup Whether user is non-admin in announcement group
+   * @param canEditGroupInfo Whether user has group edit permissions
+   */
   private data class Scenario(
     val recipient: Recipient,
     val conversationMessage: ConversationMessage,

@@ -32,6 +32,19 @@ import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * Instrumented test for conversation list accessibility actions.
+ *
+ * Tests that the conversation list properly exposes accessibility actions for each row,
+ * allowing users of accessibility services (screen readers, etc.) to:
+ * - Discover available actions (Read, Pin, Mute, Select, Archive, Delete)
+ * - Understand action labels through localized strings
+ * - Invoke actions programmatically
+ * - Transition to selection mode when selecting a conversation
+ *
+ * Uses [ActivityScenario] to launch and interact with MainActivity in a controlled environment.
+ * Waits for UI state changes and verifies accessibility nodes are properly configured.
+ */
 @RunWith(AndroidJUnit4::class)
 class ConversationListAdapterAccessibilityActionsInstrumentedTest {
 
@@ -39,6 +52,17 @@ class ConversationListAdapterAccessibilityActionsInstrumentedTest {
   @JvmField
   val harness = SignalActivityRule(1, false)
 
+  /**
+   * Tests that conversation list rows expose all expected accessibility actions.
+   *
+   * Verifies:
+   * 1. Accessibility actions are discoverable and have correct labels
+   * 2. Selecting a conversation via accessibility action transitions to selection mode
+   * 3. Multi-select action is no longer available after entering selection mode
+   *
+   * This is a critical integration test ensuring accessibility compliance for the
+   * conversation list UI, enabling blind/low-vision users to navigate and manage conversations.
+   */
   @Test
   fun liveConversationRow_exposesActions_andSelectActionStartsSelectionMode() {
     val other = Recipient.resolved(harness.others.first())

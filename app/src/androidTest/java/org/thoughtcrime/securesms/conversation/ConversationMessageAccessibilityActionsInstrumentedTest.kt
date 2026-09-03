@@ -32,6 +32,20 @@ import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * Instrumented test for conversation message accessibility actions.
+ *
+ * Tests that messages in conversations properly expose accessibility actions,
+ * allowing users of accessibility services to:
+ * - Discover available actions (Reply, Multi-Select, Delete, etc.)
+ * - Understand action labels through localized strings
+ * - Invoke actions programmatically
+ * - Enter multi-select mode to bulk-manage messages
+ *
+ * Uses [ActivityScenario] to launch MainActivity and navigate to a conversation view.
+ * Simulates accessibility service interactions with the message list to verify
+ * proper accessibility node configuration and action availability.
+ */
 @RunWith(AndroidJUnit4::class)
 class ConversationMessageAccessibilityActionsInstrumentedTest {
 
@@ -39,6 +53,18 @@ class ConversationMessageAccessibilityActionsInstrumentedTest {
   @JvmField
   val harness = SignalActivityRule(1, false)
 
+  /**
+   * Tests that messages in conversations expose all expected accessibility actions.
+   *
+   * Verifies:
+   * 1. Messages are accessible in the conversation view after navigating to it
+   * 2. Accessibility actions are discoverable and have correct labels
+   * 3. Multi-select action via accessibility API transitions to action mode
+   * 4. Multi-select action is no longer available after entering action mode
+   *
+   * This is a critical integration test ensuring accessibility compliance for the
+   * conversation message UI, enabling blind/low-vision users to interact with messages.
+   */
   @Test
   fun liveMessage_exposesAccessibilityActions_andMultiSelectActionStartsActionMode() {
     val other = Recipient.resolved(harness.others.first())

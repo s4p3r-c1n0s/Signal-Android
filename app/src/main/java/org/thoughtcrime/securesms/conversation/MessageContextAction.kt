@@ -11,9 +11,32 @@ import androidx.annotation.StringRes
 import org.thoughtcrime.securesms.R
 import org.signal.core.ui.R as CoreUiR
 
+/**
+ * Defines all available context menu actions for messages in conversations.
+ *
+ * Each action is mapped to:
+ * - An accessibility action ID for accessibility services to reference
+ * - A localized label string resource
+ * - An icon drawable resource
+ *
+ * Actions are conditionally displayed based on message state and permissions via [MenuState].
+ * The [MessageActionPolicy] determines which actions are available for a given message context.
+ */
 enum class MessageContextAction(
+  /**
+   * Unique accessibility action ID registered with Android's accessibility framework.
+   * Used by accessibility services to identify and invoke specific actions.
+   */
   @IdRes val accessibilityActionId: Int,
+  /**
+   * String resource ID for the user-visible label of this action.
+   * Used in menus, buttons, and accessibility announcements.
+   */
   @StringRes val labelRes: Int,
+  /**
+   * Drawable resource ID for the action's icon.
+   * Used in context menus and toolbars to visually represent the action.
+   */
   @DrawableRes val iconRes: Int
 ) {
   REPLY(
@@ -96,6 +119,15 @@ enum class MessageContextAction(
     private val BY_ACCESSIBILITY_ID: Map<Int, MessageContextAction> =
       values().associateBy(MessageContextAction::accessibilityActionId)
 
+    /**
+     * Looks up a [MessageContextAction] by its accessibility action ID.
+     *
+     * This is used when accessibility services dispatch custom actions to map the
+     * numeric action ID back to the corresponding enum constant.
+     *
+     * @param actionId The accessibility action ID to look up
+     * @return The matching [MessageContextAction], or null if not found
+     */
     @JvmStatic
     fun fromAccessibilityActionId(actionId: Int): MessageContextAction? {
       return BY_ACCESSIBILITY_ID[actionId]
