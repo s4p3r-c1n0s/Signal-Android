@@ -7,6 +7,8 @@ package org.thoughtcrime.securesms.conversation
 
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -15,6 +17,11 @@ import org.junit.Test
 import org.thoughtcrime.securesms.conversation.mutiselect.MultiselectCollection
 import org.thoughtcrime.securesms.conversation.mutiselect.MultiselectPart
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.keyvalue.AccountValues
+import org.thoughtcrime.securesms.keyvalue.LabsValues
+import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.polls.PollRecord
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.util.RemoteConfig
 
@@ -24,12 +31,23 @@ class MenuStateAccessibilityContractTest {
   fun setUp() {
     RemoteConfig.REMOTE_VALUES.clear()
     RemoteConfig.initialized = true
+
+    mockkObject(SignalStore)
+
+    val labs = mockk<LabsValues>(relaxed = true)
+    every { labs.starredMessages } returns true
+    every { SignalStore.labs } returns labs
+
+    val account = mockk<AccountValues>(relaxed = true)
+    every { account.isPrimaryDevice } returns true
+    every { SignalStore.account } returns account
   }
 
   @After
   fun tearDown() {
     RemoteConfig.REMOTE_VALUES.clear()
     RemoteConfig.initialized = false
+    unmockkObject(SignalStore)
   }
 
   //region Core Actions Tests
@@ -46,7 +64,7 @@ class MenuStateAccessibilityContractTest {
     assertTrue(menuState.shouldShowDeleteAction())
     assertTrue(menuState.shouldShowReactions())
     assertFalse(menuState.shouldShowPinMessage())
-    assertFalse(menuState.showShowUnpinMessage())
+    assertFalse(menuState.shouldShowUnpinMessage())
   }
 
   @Test
@@ -75,7 +93,7 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun ownMessage_showsEditAction() {
-    val scenario = buildSingleMessageScenario(isOwnMessage = true)
+    val scenario = buildSingleMessageScenario(isOwnMessage = true, hasText = true)
     val menuState = getMenuState(scenario)
 
     assertTrue(menuState.shouldShowEditAction())
@@ -83,7 +101,7 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun otherMessage_hidesEditAction() {
-    val scenario = buildSingleMessageScenario(isOwnMessage = false)
+    val scenario = buildSingleMessageScenario(isOwnMessage = false, hasText = true)
     val menuState = getMenuState(scenario)
 
     assertFalse(menuState.shouldShowEditAction())
@@ -91,7 +109,7 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun failedMessage_hidesEditAction() {
-    val scenario = buildSingleMessageScenario(isFailed = true)
+    val scenario = buildSingleMessageScenario(isFailed = true, hasText = true)
     val menuState = getMenuState(scenario)
 
     assertFalse(menuState.shouldShowEditAction())
@@ -123,7 +141,7 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun mmsMessage_showsSaveAttachmentAction() {
-    val scenario = buildSingleMessageScenario(isMms = true)
+    val scenario = buildMmsMessageScenario()
     val menuState = getMenuState(scenario)
 
     assertTrue(menuState.shouldShowSaveAttachmentAction())
@@ -199,7 +217,7 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun activePoll_showsPollTerminateAction() {
-    val scenario = buildSingleMessageScenario(hasActivePoll = true, isOwnMessage = true)
+    val scenario = buildMmsMessageScenario(hasActivePoll = true, isOwnMessage = true)
     val menuState = getMenuState(scenario)
 
     assertTrue(menuState.shouldShowPollTerminateAction())
@@ -207,7 +225,7 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun otherUserPoll_hidesPollTerminateAction() {
-    val scenario = buildSingleMessageScenario(hasActivePoll = true, isOwnMessage = false)
+    val scenario = buildMmsMessageScenario(hasActivePoll = true, isOwnMessage = false)
     val menuState = getMenuState(scenario)
 
     assertFalse(menuState.shouldShowPollTerminateAction())
@@ -247,10 +265,10 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun canEditGroupInfo_showsUnpinMessage() {
-    val scenario = buildSingleMessageScenario(canEditGroupInfo = true)
+    val scenario = buildSingleMessageScenario(canEditGroupInfo = true, pinnedUntil = 1L)
     val menuState = getMenuState(scenario)
 
-    assertTrue(menuState.showShowUnpinMessage())
+    assertTrue(menuState.shouldShowUnpinMessage())
   }
 
   @Test
@@ -258,7 +276,7 @@ class MenuStateAccessibilityContractTest {
     val scenario = buildSingleMessageScenario(canEditGroupInfo = false)
     val menuState = getMenuState(scenario)
 
-    assertFalse(menuState.showShowUnpinMessage())
+    assertFalse(menuState.shouldShowUnpinMessage())
   }
 
   //endregion
@@ -287,7 +305,7 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun ownMessage_showsUnstarMessage() {
-    val scenario = buildSingleMessageScenario(isOwnMessage = true)
+    val scenario = buildSingleMessageScenario(isOwnMessage = true, isStarred = true)
     val menuState = getMenuState(scenario)
 
     assertTrue(menuState.shouldShowUnstarMessage())
@@ -295,7 +313,7 @@ class MenuStateAccessibilityContractTest {
 
   @Test
   fun otherMessage_showsUnstarMessage() {
-    val scenario = buildSingleMessageScenario(isOwnMessage = false)
+    val scenario = buildSingleMessageScenario(isOwnMessage = false, isStarred = true)
     val menuState = getMenuState(scenario)
 
     assertTrue(menuState.shouldShowUnstarMessage())
@@ -333,6 +351,73 @@ class MenuStateAccessibilityContractTest {
     )
   }
 
+  private fun buildMmsMessageScenario(
+    hasActivePoll: Boolean = false,
+    isOwnMessage: Boolean = false
+  ): Scenario {
+    val sender = mockk<Recipient>(relaxed = true).apply {
+      every { isBlocked } returns false
+    }
+
+    val recipient = mockk<Recipient>(relaxed = true).apply {
+      every { isReleaseNotes } returns false
+      every { isGroup } returns false
+      every { isActiveGroup } returns true
+    }
+
+    val poll: PollRecord? = if (hasActivePoll) {
+      mockk<PollRecord>(relaxed = true).apply {
+        every { hasEnded } returns false
+      }
+    } else {
+      null
+    }
+
+    val slideDeck = mockk<org.thoughtcrime.securesms.mms.SlideDeck>(relaxed = true).apply {
+      every { stickerSlide } returns null
+    }
+
+    val messageRecord = mockk<MmsMessageRecord>(relaxed = true).apply {
+      every { body } returns ""
+      every { isInMemoryMessageRecord() } returns false
+      every { isUpdate() } returns false
+      every { isMms() } returns true
+      every { isMmsNotification() } returns false
+      every { isViewOnce() } returns false
+      every { isRemoteDelete() } returns false
+      every { isFailed() } returns false
+      every { isPending() } returns false
+      every { isSecure() } returns true
+      every { isPaymentNotification() } returns false
+      every { isPaymentTombstone() } returns false
+      every { fromRecipient } returns sender
+      every { isOutgoing() } returns isOwnMessage
+      every { getPinnedUntil() } returns 0L
+      every { isStarred() } returns false
+      every { this@apply.poll } returns poll
+      every { sharedContacts } returns emptyList()
+      every { containsMediaSlide() } returns true
+      every { isMediaPending() } returns false
+      every { this@apply.slideDeck } returns slideDeck
+      every { giftBadge } returns null
+    }
+
+    val conversationMessage = mockk<ConversationMessage>(relaxed = true)
+    every { conversationMessage.messageRecord } returns messageRecord
+
+    val part = MultiselectPart.Attachments(conversationMessage)
+    every { conversationMessage.multiselectCollection } returns MultiselectCollection.Single(part)
+
+    return Scenario(
+      recipient = recipient,
+      conversationMessage = conversationMessage,
+      selectedParts = setOf(part),
+      shouldShowMessageRequest = false,
+      isNonAdminInAnnouncementGroup = false,
+      canEditGroupInfo = false
+    )
+  }
+
   private fun buildSingleMessageScenario(
     shouldShowMessageRequest: Boolean = false,
     isNonAdminInAnnouncementGroup: Boolean = false,
@@ -345,7 +430,9 @@ class MenuStateAccessibilityContractTest {
     isPending: Boolean = false,
     isPaymentNotification: Boolean = false,
     isPaymentTombstone: Boolean = false,
-    hasActivePoll: Boolean = false
+    hasActivePoll: Boolean = false,
+    pinnedUntil: Long = 0L,
+    isStarred: Boolean = false
   ): Scenario {
     val sender = mockk<Recipient>(relaxed = true).apply {
       every { isBlocked } returns isSenderBlocked
@@ -357,25 +444,38 @@ class MenuStateAccessibilityContractTest {
       every { isActiveGroup } returns true
     }
 
+    val toRecipient = mockk<Recipient>(relaxed = true).apply {
+      every { isSelf } returns true
+      every { isGroup } returns false
+      every { isActiveGroup } returns true
+    }
+
     val messageRecord = mockk<MessageRecord>(relaxed = true).apply {
       every { body } returns if (hasText) "Sample message body" else ""
-      every { isInMemoryMessageRecord } returns false
-      every { isUpdate } returns false
-      every { isMms } returns isMms
-      every { isViewOnce } returns false
-      every { isRemoteDelete } returns false
-      every { isFailed } returns isFailed
-      every { isPending } returns isPending
-      every { isSecure } returns true
-      every { isPaymentNotification } returns isPaymentNotification
-      every { isPaymentTombstone } returns isPaymentTombstone
+      every { isInMemoryMessageRecord() } returns false
+      every { isUpdate() } returns false
+      every { isMms() } returns isMms
+      every { isViewOnce() } returns false
+      every { isRemoteDelete() } returns false
+      every { isFailed() } returns isFailed
+      every { isPending() } returns isPending
+      every { isSecure() } returns true
+      every { isPush() } returns true
+      every { isPaymentNotification() } returns isPaymentNotification
+      every { isPaymentTombstone() } returns isPaymentTombstone
       every { fromRecipient } returns sender
-      every { isOutgoing } returns isOwnMessage
-      every { getPoll() } returns if (hasActivePoll) mockk(relaxed = true) else null
+      every { this@apply.toRecipient } returns toRecipient
+      every { isOutgoing() } returns isOwnMessage
+      every { getPinnedUntil() } returns pinnedUntil
+      every { isStarred() } returns isStarred
+      every { isEditMessage() } returns false
+      every { dateSent } returns System.currentTimeMillis()
+      every { revisionNumber } returns 0
     }
 
     val conversationMessage = mockk<ConversationMessage>(relaxed = true)
     every { conversationMessage.messageRecord } returns messageRecord
+    every { conversationMessage.originalMessage } returns messageRecord
 
     val part = MultiselectPart.Text(conversationMessage)
     every { conversationMessage.multiselectCollection } returns MultiselectCollection.Single(part)

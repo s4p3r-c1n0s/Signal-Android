@@ -2786,6 +2786,7 @@ class ConversationFragment :
       conversationMessage = conversationMessage,
       shouldShowMessageRequest = viewModel.hasMessageRequestState,
       isNonAdminInAnnouncementGroup = conversationGroupViewModel.isNonAdminInAnnouncementGroup(),
+      canEditGroupInfo = conversationGroupViewModel.canEditGroupInfo(),
       isActionModeStarted = isActionModeStarted(),
       hasSelection = adapter.selectedItems.isNotEmpty()
     )

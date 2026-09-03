@@ -1497,7 +1497,7 @@ public class ConversationListFragment extends MainFragment implements Conversati
         handleArchive(ids);
         break;
       case DELETE:
-        handleDelete(ids);
+        handleDelete(ids, conversation.getThreadRecord().getRecipient().resolve().isActiveGroup());
         break;
     }
   }

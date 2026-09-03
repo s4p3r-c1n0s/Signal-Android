@@ -39,7 +39,7 @@ enum class MessageContextAction(
   SAVE(
     accessibilityActionId = R.id.conversation_message_accessibility_save_action,
     labelRes = R.string.conversation_selection__menu_save,
-    iconRes = R.drawable.symbol_save_android_24
+    iconRes = CoreUiR.drawable.symbol_save_android_24
   ),
   COPY(
     accessibilityActionId = R.id.conversation_message_accessibility_copy_action,

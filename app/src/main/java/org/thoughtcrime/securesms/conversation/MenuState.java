@@ -100,7 +100,7 @@ public final class MenuState {
     return pinMessage;
   }
 
-  public boolean showShowUnpinMessage() {
+  public boolean shouldShowUnpinMessage() {
     return unpinMessage;
   }
 

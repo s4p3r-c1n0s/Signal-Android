@@ -53,4 +53,8 @@
     <item name="conversation_message_accessibility_view_info_action" type="id" />
     <item name="conversation_message_accessibility_end_poll_action" type="id" />
     <item name="conversation_message_accessibility_delete_action" type="id" />
+    <item name="conversation_message_accessibility_pin_action" type="id" />
+    <item name="conversation_message_accessibility_unpin_action" type="id" />
+    <item name="conversation_message_accessibility_star_action" type="id" />
+    <item name="conversation_message_accessibility_unstar_action" type="id" />
 </resources>
