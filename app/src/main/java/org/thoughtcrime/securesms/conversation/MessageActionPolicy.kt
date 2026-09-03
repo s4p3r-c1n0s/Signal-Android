@@ -7,16 +7,6 @@ package org.thoughtcrime.securesms.conversation
 
 import org.thoughtcrime.securesms.recipients.Recipient
 
-data class MessageActionPolicyContext(
-  val recipient: Recipient,
-  val conversationMessage: ConversationMessage,
-  val shouldShowMessageRequest: Boolean,
-  val isNonAdminInAnnouncementGroup: Boolean,
-  val canEditGroupInfo: Boolean,
-  val isActionModeStarted: Boolean,
-  val hasSelection: Boolean
-)
-
 object MessageActionPolicy {
 
   @JvmStatic
@@ -106,3 +96,13 @@ object MessageActionPolicy {
     )
   }
 }
+
+data class MessageActionPolicyContext(
+  val recipient: Recipient,
+  val conversationMessage: ConversationMessage,
+  val shouldShowMessageRequest: Boolean,
+  val isNonAdminInAnnouncementGroup: Boolean,
+  val canEditGroupInfo: Boolean,
+  val isActionModeStarted: Boolean,
+  val hasSelection: Boolean
+)
