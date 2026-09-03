@@ -493,7 +493,6 @@ class ConversationFragment :
       _binding.conversationItemRecycler.removeOnScrollListener(it)
     }
     scrollListener = null
-    adapter.setMessageAccessibilityDelegate(null)
 
     _binding.conversationItemRecycler.adapter = null
 
@@ -1481,7 +1480,6 @@ class ConversationFragment :
       SwipeAvailabilityProvider(),
       this::handleReplyToMessage
     ).attachToRecyclerView(binding.conversationItemRecycler)
-    attachMessageAccessibilityActions()
 
     viewModel
       .inputReadyState
@@ -2330,6 +2328,10 @@ class ConversationFragment :
 
     adapter.setPagingController(viewModel.pagingController)
 
+    // Set accessibility delegate before assigning adapter to RecyclerView to ensure
+    // newly-created message holders receive the delegate in onCreateViewHolder.
+    adapter.setMessageAccessibilityDelegate(messageAccessibilityDelegate)
+
     recyclerViewColorizer = RecyclerViewColorizer(binding.conversationItemRecycler)
     viewModel.recipientSnapshot?.chatColors?.let { recyclerViewColorizer.setChatColors(it) }
 
@@ -2736,9 +2738,6 @@ class ConversationFragment :
     }
   }
 
-  private fun attachMessageAccessibilityActions() {
-    adapter.setMessageAccessibilityDelegate(messageAccessibilityDelegate, binding.conversationItemRecycler)
-  }
 
   private fun getConversationMessageFromAccessibilityHost(host: View): ConversationMessage? {
     return getInteractiveConversationElement(host)?.conversationMessage

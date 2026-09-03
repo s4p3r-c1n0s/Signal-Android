@@ -323,17 +323,8 @@ class ConversationAdapterV2(
     }
   }
 
-  fun setMessageAccessibilityDelegate(delegate: AccessibilityDelegateCompat?, recyclerView: RecyclerView? = null) {
+  fun setMessageAccessibilityDelegate(delegate: AccessibilityDelegateCompat?) {
     this.messageAccessibilityDelegate = delegate
-
-    // Apply delegate to all existing children. The delegate safely no-ops for non-message rows
-    // since it only exposes accessibility actions on message row view types.
-    if (recyclerView != null) {
-      for (index in 0 until recyclerView.childCount) {
-        val child = recyclerView.getChildAt(index)
-        ViewCompat.setAccessibilityDelegate(child, delegate)
-      }
-    }
   }
 
   fun clearSelection() {
