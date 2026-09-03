@@ -79,6 +79,8 @@ object MessageActionPolicy {
 
   @JvmStatic
   fun shouldShowReactions(context: MessageActionPolicyContext): Boolean {
+    // Reactions are not exposed as accessibility actions (see availableActions()) but are handled
+    // through a separate UI mechanism (emoji picker overlay) with different accessibility patterns
     if (context.isActionModeStarted || context.hasSelection) {
       return false
     }
