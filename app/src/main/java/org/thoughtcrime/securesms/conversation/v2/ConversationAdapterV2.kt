@@ -323,8 +323,25 @@ class ConversationAdapterV2(
     }
   }
 
-  fun setMessageAccessibilityDelegate(delegate: AccessibilityDelegateCompat?) {
+  fun setMessageAccessibilityDelegate(delegate: AccessibilityDelegateCompat?, recyclerView: RecyclerView? = null) {
     this.messageAccessibilityDelegate = delegate
+
+    // Apply delegate to already-attached message holders
+    if (recyclerView != null) {
+      for (index in 0 until recyclerView.childCount) {
+        val child = recyclerView.getChildAt(index)
+        val viewHolder = recyclerView.getChildViewHolder(child)
+        if (isMessageViewHolder(viewHolder)) {
+          ViewCompat.setAccessibilityDelegate(child, delegate)
+        }
+      }
+    }
+  }
+
+  private fun isMessageViewHolder(viewHolder: RecyclerView.ViewHolder): Boolean {
+    return viewHolder::class.simpleName?.let {
+      it.contains("V2ConversationItem") || it.contains("OutgoingMedia") || it.contains("IncomingMedia")
+    } ?: false
   }
 
   fun clearSelection() {

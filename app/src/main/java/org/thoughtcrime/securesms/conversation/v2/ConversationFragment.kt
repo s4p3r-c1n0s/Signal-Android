@@ -2737,7 +2737,7 @@ class ConversationFragment :
   }
 
   private fun attachMessageAccessibilityActions() {
-    adapter.setMessageAccessibilityDelegate(messageAccessibilityDelegate)
+    adapter.setMessageAccessibilityDelegate(messageAccessibilityDelegate, binding.conversationItemRecycler)
   }
 
   private fun getConversationMessageFromAccessibilityHost(host: View): ConversationMessage? {
