@@ -493,7 +493,7 @@ class ConversationFragment :
       _binding.conversationItemRecycler.removeOnScrollListener(it)
     }
     scrollListener = null
-    _binding.conversationItemRecycler.removeOnChildAttachStateChangeListener(messageAccessibilityChildAttachStateChangeListener)
+    adapter.setMessageAccessibilityDelegate(null)
 
     _binding.conversationItemRecycler.adapter = null
 
@@ -688,16 +688,6 @@ class ConversationFragment :
       }
 
       return executeMessageContextAction(conversationMessage, messageAction)
-    }
-  }
-
-  private val messageAccessibilityChildAttachStateChangeListener = object : RecyclerView.OnChildAttachStateChangeListener {
-    override fun onChildViewAttachedToWindow(view: View) {
-      ViewCompat.setAccessibilityDelegate(view, messageAccessibilityDelegate)
-    }
-
-    override fun onChildViewDetachedFromWindow(view: View) {
-      ViewCompat.setAccessibilityDelegate(view, null)
     }
   }
 
@@ -2747,13 +2737,7 @@ class ConversationFragment :
   }
 
   private fun attachMessageAccessibilityActions() {
-    val recyclerView = binding.conversationItemRecycler
-
-    recyclerView.addOnChildAttachStateChangeListener(messageAccessibilityChildAttachStateChangeListener)
-
-    for (index in 0 until recyclerView.childCount) {
-      ViewCompat.setAccessibilityDelegate(recyclerView.getChildAt(index), messageAccessibilityDelegate)
-    }
+    adapter.setMessageAccessibilityDelegate(messageAccessibilityDelegate)
   }
 
   private fun getConversationMessageFromAccessibilityHost(host: View): ConversationMessage? {
