@@ -1467,7 +1467,7 @@ public class ConversationListFragment extends MainFragment implements Conversati
   }
 
   @Override
-  public void onConversationAccessibilityAction(@NonNull Conversation conversation, @NonNull ConversationListAdapter.ThreadAccessibilityAction action) {
+  public void onConversationAccessibilityAction(@NonNull Conversation conversation, @NonNull ThreadAccessibilityAction action) {
     Collection<Long> ids = Collections.singleton(conversation.getThreadRecord().getThreadId());
 
     switch (action) {

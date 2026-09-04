@@ -20,24 +20,7 @@ import org.thoughtcrime.securesms.conversationlist.model.Conversation
  */
 object ConversationListAccessibilityHelper {
 
-  /**
-   * Adds the appropriate accessibility actions to a node based on conversation state.
-   *
-   * Actions exposed (excluding archived rows):
-   * - Read/unread toggle
-   * - Pin/unpin toggle
-   * - Mute/unmute toggle
-   *
-   * Actions always exposed:
-   * - Select (unless in selection mode)
-   * - Archive/unarchive toggle
-   * - Delete
-   *
-   * @param info The AccessibilityNodeInfo to populate
-   * @param context Android context for resources
-   * @param conversation The conversation whose state determines which actions to expose
-   * @param isInSelectionMode True if the list is in multi-select mode (suppresses action exposure)
-   */
+  @JvmStatic
   fun addConversationActions(
     info: AccessibilityNodeInfo,
     context: Context,
@@ -110,79 +93,69 @@ object ConversationListAccessibilityHelper {
     )
   }
 
-  /**
-   * Dispatches an accessibility action to the appropriate handler based on the action ID.
-   *
-   * Determines the correct action (read/unread, pin/unpin, mute/unmute, etc.) by inspecting
-   * the conversation's current state and the action ID, then delegates to the listener.
-   *
-   * @param actionId The accessibility action ID
-   * @param conversation The conversation being acted upon
-   * @param listener The callback to invoke with the resolved action
-   * @return true if the action was handled, false otherwise
-   */
+  @JvmStatic
   fun dispatchConversationAction(
     actionId: Int,
     conversation: Conversation,
-    listener: ConversationListAdapter.OnConversationClickListener
+    listener: OnAccessibilityActionListener
   ): Boolean {
     return when (actionId) {
       R.id.conversation_list_accessibility_read_action -> {
-        listener.onConversationAccessibilityAction(
+        listener.onAccessibilityAction(
           conversation,
           if (conversation.threadRecord.isRead)
-            ConversationListAdapter.ThreadAccessibilityAction.MARK_AS_UNREAD
+            ThreadAccessibilityAction.MARK_AS_UNREAD
           else
-            ConversationListAdapter.ThreadAccessibilityAction.MARK_AS_READ
+            ThreadAccessibilityAction.MARK_AS_READ
         )
         true
       }
 
       R.id.conversation_list_accessibility_pin_action -> {
-        listener.onConversationAccessibilityAction(
+        listener.onAccessibilityAction(
           conversation,
           if (conversation.threadRecord.isPinned)
-            ConversationListAdapter.ThreadAccessibilityAction.UNPIN
+            ThreadAccessibilityAction.UNPIN
           else
-            ConversationListAdapter.ThreadAccessibilityAction.PIN
+            ThreadAccessibilityAction.PIN
         )
         true
       }
 
       R.id.conversation_list_accessibility_mute_action -> {
-        listener.onConversationAccessibilityAction(
+        listener.onAccessibilityAction(
           conversation,
           if (conversation.threadRecord.recipient.live().get().isMuted)
-            ConversationListAdapter.ThreadAccessibilityAction.UNMUTE
+            ThreadAccessibilityAction.UNMUTE
           else
-            ConversationListAdapter.ThreadAccessibilityAction.MUTE
+            ThreadAccessibilityAction.MUTE
         )
         true
       }
 
       R.id.conversation_list_accessibility_select_action -> {
-        listener.onConversationAccessibilityAction(
+        listener.onAccessibilityAction(
           conversation,
-          ConversationListAdapter.ThreadAccessibilityAction.SELECT
+          ThreadAccessibilityAction.SELECT
         )
         true
       }
 
       R.id.conversation_list_accessibility_archive_action -> {
-        listener.onConversationAccessibilityAction(
+        listener.onAccessibilityAction(
           conversation,
           if (conversation.threadRecord.isArchived)
-            ConversationListAdapter.ThreadAccessibilityAction.UNARCHIVE
+            ThreadAccessibilityAction.UNARCHIVE
           else
-            ConversationListAdapter.ThreadAccessibilityAction.ARCHIVE
+            ThreadAccessibilityAction.ARCHIVE
         )
         true
       }
 
       R.id.conversation_list_accessibility_delete_action -> {
-        listener.onConversationAccessibilityAction(
+        listener.onAccessibilityAction(
           conversation,
-          ConversationListAdapter.ThreadAccessibilityAction.DELETE
+          ThreadAccessibilityAction.DELETE
         )
         true
       }
@@ -193,5 +166,9 @@ object ConversationListAccessibilityHelper {
 
   private fun addAction(info: AccessibilityNodeInfo, id: Int, label: String) {
     info.addAction(AccessibilityNodeInfo.AccessibilityAction(id, label))
+  }
+
+  interface OnAccessibilityActionListener {
+    fun onAccessibilityAction(conversation: Conversation, action: ThreadAccessibilityAction)
   }
 }

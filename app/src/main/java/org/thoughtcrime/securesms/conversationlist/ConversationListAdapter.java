@@ -53,19 +53,6 @@ class ConversationListAdapter extends ListAdapter<Conversation, RecyclerView.Vie
     ACTIVE
   }
 
-  enum ThreadAccessibilityAction {
-    MARK_AS_READ,
-    MARK_AS_UNREAD,
-    PIN,
-    UNPIN,
-    MUTE,
-    UNMUTE,
-    SELECT,
-    ARCHIVE,
-    UNARCHIVE,
-    DELETE
-  }
-
   private final LifecycleOwner                                      lifecycleOwner;
   private final RequestManager                                      requestManager;
   private final OnConversationClickListener                         onConversationClickListener;
@@ -233,7 +220,11 @@ class ConversationListAdapter extends ListAdapter<Conversation, RecyclerView.Vie
       @Override
       public boolean performAccessibilityAction(@NonNull View host, int action, @Nullable Bundle args) {
         if (selectedConversations.isEmpty()) {
-          return ConversationListAccessibilityHelper.dispatchConversationAction(action, conversation, onConversationClickListener);
+          return ConversationListAccessibilityHelper.dispatchConversationAction(
+            action,
+            conversation,
+            (conv, actionType) -> onConversationClickListener.onConversationAccessibilityAction(conv, actionType)
+          );
         }
         return super.performAccessibilityAction(host, action, args);
       }
