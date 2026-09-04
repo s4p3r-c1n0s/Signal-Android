@@ -32,6 +32,8 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.AccessibilityDelegateCompat;
+import androidx.core.view.ViewCompat;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
@@ -117,6 +119,7 @@ public class ConversationAdapter
   private boolean                     isTypingViewEnabled;
   private ConversationItemDisplayMode displayMode;
   private PulseRequest                pulseRequest;
+  private @Nullable AccessibilityDelegateCompat messageAccessibilityDelegate;
 
   public ConversationAdapter(@NonNull Context context,
                       @NonNull LifecycleOwner lifecycleOwner,
@@ -202,6 +205,10 @@ public class ConversationAdapter
         });
 
         bindable.setEventListener(clickListener);
+
+        if (messageAccessibilityDelegate != null) {
+          ViewCompat.setAccessibilityDelegate(itemView, messageAccessibilityDelegate);
+        }
 
         return new ConversationViewHolder(itemView);
       case MESSAGE_TYPE_PLACEHOLDER:
@@ -670,6 +677,10 @@ public class ConversationAdapter
       this.isMessageRequestAccepted = messageRequestAccepted;
       notifyDataSetChanged();
     }
+  }
+
+  public void setMessageAccessibilityDelegate(@Nullable AccessibilityDelegateCompat delegate) {
+    this.messageAccessibilityDelegate = delegate;
   }
 
   public void playInlineContent(@Nullable ConversationMessage conversationMessage) {

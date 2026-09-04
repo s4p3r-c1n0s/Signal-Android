@@ -201,9 +201,6 @@ import org.thoughtcrime.securesms.conversation.ConversationIntents.ConversationS
 import org.thoughtcrime.securesms.conversation.ConversationItem
 import org.thoughtcrime.securesms.conversation.ConversationItemSelection
 import org.thoughtcrime.securesms.conversation.ConversationItemSwipeCallback
-import org.thoughtcrime.securesms.conversation.MessageActionPolicy
-import org.thoughtcrime.securesms.conversation.MessageActionPolicyContext
-import org.thoughtcrime.securesms.conversation.MessageContextAction
 import org.thoughtcrime.securesms.conversation.ConversationMessage
 import org.thoughtcrime.securesms.conversation.ConversationOptionsMenu
 import org.thoughtcrime.securesms.conversation.ConversationReactionDelegate
@@ -214,6 +211,9 @@ import org.thoughtcrime.securesms.conversation.ConversationSearchViewModel
 import org.thoughtcrime.securesms.conversation.ConversationUpdateTick
 import org.thoughtcrime.securesms.conversation.MarkReadHelper
 import org.thoughtcrime.securesms.conversation.MenuState
+import org.thoughtcrime.securesms.conversation.MessageActionPolicy
+import org.thoughtcrime.securesms.conversation.MessageActionPolicyContext
+import org.thoughtcrime.securesms.conversation.MessageContextAction
 import org.thoughtcrime.securesms.conversation.MessageSendType
 import org.thoughtcrime.securesms.conversation.MessageStyler.getStyling
 import org.thoughtcrime.securesms.conversation.PinnedMessagesBottomSheet
@@ -493,7 +493,6 @@ class ConversationFragment :
       _binding.conversationItemRecycler.removeOnScrollListener(it)
     }
     scrollListener = null
-    _binding.conversationItemRecycler.removeOnChildAttachStateChangeListener(messageAccessibilityChildAttachStateChangeListener)
 
     _binding.conversationItemRecycler.adapter = null
 
@@ -688,16 +687,6 @@ class ConversationFragment :
       }
 
       return executeMessageContextAction(conversationMessage, messageAction)
-    }
-  }
-
-  private val messageAccessibilityChildAttachStateChangeListener = object : RecyclerView.OnChildAttachStateChangeListener {
-    override fun onChildViewAttachedToWindow(view: View) {
-      ViewCompat.setAccessibilityDelegate(view, messageAccessibilityDelegate)
-    }
-
-    override fun onChildViewDetachedFromWindow(view: View) {
-      ViewCompat.setAccessibilityDelegate(view, null)
     }
   }
 
@@ -1491,7 +1480,6 @@ class ConversationFragment :
       SwipeAvailabilityProvider(),
       this::handleReplyToMessage
     ).attachToRecyclerView(binding.conversationItemRecycler)
-    attachMessageAccessibilityActions()
 
     viewModel
       .inputReadyState
@@ -2340,6 +2328,10 @@ class ConversationFragment :
 
     adapter.setPagingController(viewModel.pagingController)
 
+    // Set accessibility delegate before assigning adapter to RecyclerView to ensure
+    // newly-created message holders receive the delegate in onCreateViewHolder.
+    adapter.setMessageAccessibilityDelegate(messageAccessibilityDelegate)
+
     recyclerViewColorizer = RecyclerViewColorizer(binding.conversationItemRecycler)
     viewModel.recipientSnapshot?.chatColors?.let { recyclerViewColorizer.setChatColors(it) }
 
@@ -2746,15 +2738,6 @@ class ConversationFragment :
     }
   }
 
-  private fun attachMessageAccessibilityActions() {
-    val recyclerView = binding.conversationItemRecycler
-
-    recyclerView.addOnChildAttachStateChangeListener(messageAccessibilityChildAttachStateChangeListener)
-
-    for (index in 0 until recyclerView.childCount) {
-      ViewCompat.setAccessibilityDelegate(recyclerView.getChildAt(index), messageAccessibilityDelegate)
-    }
-  }
 
   private fun getConversationMessageFromAccessibilityHost(host: View): ConversationMessage? {
     return getInteractiveConversationElement(host)?.conversationMessage
@@ -2786,6 +2769,7 @@ class ConversationFragment :
       conversationMessage = conversationMessage,
       shouldShowMessageRequest = viewModel.hasMessageRequestState,
       isNonAdminInAnnouncementGroup = conversationGroupViewModel.isNonAdminInAnnouncementGroup(),
+      canEditGroupInfo = conversationGroupViewModel.canEditGroupInfo(),
       isActionModeStarted = isActionModeStarted(),
       hasSelection = adapter.selectedItems.isNotEmpty()
     )
@@ -2845,6 +2829,22 @@ class ConversationFragment :
       }
       MessageContextAction.DELETE -> {
         handleDeleteMessages(conversationMessage.multiselectCollection.toSet())
+        true
+      }
+      MessageContextAction.PIN -> {
+        handlePinMessage(conversationMessage)
+        true
+      }
+      MessageContextAction.UNPIN -> {
+        handleUnpinMessage(conversationMessage.messageRecord.id)
+        true
+      }
+      MessageContextAction.STAR -> {
+        handleStarMessages(setOf(conversationMessage.messageRecord.id))
+        true
+      }
+      MessageContextAction.UNSTAR -> {
+        handleUnstarMessages(setOf(conversationMessage.messageRecord.id))
         true
       }
     }

@@ -10,6 +10,8 @@ import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentActivity
@@ -86,6 +88,7 @@ class ConversationAdapterV2(
 
   private val _selected = hashSetOf<MultiselectPart>()
   private var adapterPosition = RecyclerView.NO_POSITION
+  private var messageAccessibilityDelegate: AccessibilityDelegateCompat? = null
 
   override val selectedItems: Set<MultiselectPart>
     get() = _selected.toSet()
@@ -115,32 +118,50 @@ class ConversationAdapterV2(
     if (SignalStore.internal.useConversationItemV2Media) {
       registerFactory(OutgoingMedia::class.java) { parent ->
         val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_media_outgoing, parent, false)
+        if (messageAccessibilityDelegate != null) {
+          ViewCompat.setAccessibilityDelegate(view, messageAccessibilityDelegate)
+        }
         V2ConversationItemMediaViewHolder(V2ConversationItemMediaOutgoingBinding.bind(view).bridge(), this)
       }
 
       registerFactory(IncomingMedia::class.java) { parent ->
         val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_media_incoming, parent, false)
+        if (messageAccessibilityDelegate != null) {
+          ViewCompat.setAccessibilityDelegate(view, messageAccessibilityDelegate)
+        }
         V2ConversationItemMediaViewHolder(V2ConversationItemMediaIncomingBinding.bind(view).bridge(), this)
       }
     } else {
       registerFactory(OutgoingMedia::class.java) { parent ->
         val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_sent_multimedia, parent, false)
+        if (messageAccessibilityDelegate != null) {
+          ViewCompat.setAccessibilityDelegate(view, messageAccessibilityDelegate)
+        }
         OutgoingMediaViewHolder(view)
       }
 
       registerFactory(IncomingMedia::class.java) { parent ->
         val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_received_multimedia, parent, false)
+        if (messageAccessibilityDelegate != null) {
+          ViewCompat.setAccessibilityDelegate(view, messageAccessibilityDelegate)
+        }
         IncomingMediaViewHolder(view)
       }
     }
 
     registerFactory(OutgoingTextOnly::class.java) { parent ->
       val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_text_only_outgoing, parent, false)
+      if (messageAccessibilityDelegate != null) {
+        ViewCompat.setAccessibilityDelegate(view, messageAccessibilityDelegate)
+      }
       V2ConversationItemTextOnlyViewHolder(V2ConversationItemTextOnlyOutgoingBinding.bind(view).bridge(), this)
     }
 
     registerFactory(IncomingTextOnly::class.java) { parent ->
       val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_text_only_incoming, parent, false)
+      if (messageAccessibilityDelegate != null) {
+        ViewCompat.setAccessibilityDelegate(view, messageAccessibilityDelegate)
+      }
       V2ConversationItemTextOnlyViewHolder(V2ConversationItemTextOnlyIncomingBinding.bind(view).bridge(), this)
     }
   }
@@ -300,6 +321,10 @@ class ConversationAdapterV2(
     if (oldState != isMessageRequestAccepted) {
       notifyItemRangeChanged(0, itemCount, V2Payload.MESSAGE_REQUEST_STATE)
     }
+  }
+
+  fun setMessageAccessibilityDelegate(delegate: AccessibilityDelegateCompat?) {
+    this.messageAccessibilityDelegate = delegate
   }
 
   fun clearSelection() {
