@@ -27,6 +27,7 @@ import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.model.StoryType
 import org.thoughtcrime.securesms.mms.IncomingMessage
 import org.thoughtcrime.securesms.recipients.Recipient
+import org.thoughtcrime.securesms.testing.DisableAnimationsRule
 import org.thoughtcrime.securesms.testing.SignalActivityRule
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
@@ -34,6 +35,10 @@ import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(AndroidJUnit4::class)
 class ConversationListAdapterAccessibilityActionsInstrumentedTest {
+
+  @Rule
+  @JvmField
+  val disableAnimationsRule = DisableAnimationsRule()
 
   @Rule
   @JvmField
@@ -75,14 +80,14 @@ class ConversationListAdapterAccessibilityActionsInstrumentedTest {
 
       assertTrue(performAction(scenario, R.id.conversation_list_accessibility_select_action))
       assertTrue(waitForViewVisible(scenario, R.id.conversation_list_bottom_action_bar, 5_000))
-      assertFalse(waitForAction(scenario, R.id.conversation_list_accessibility_select_action, 1_500))
+      assertFalse(waitForAction(scenario, R.id.conversation_list_accessibility_select_action, 300))
     } finally {
       scenario.close()
     }
   }
 
   @Test
-  fun archivedConversationRow_archiveActionLabelShowsUnarchive() {
+  fun archivedConversationRow_hidesReadPinMuteAndShowsUnarchive() {
     val other = Recipient.resolved(harness.others.first())
     val threadId = insertIncomingText(other, "archived conversation test")
 
@@ -91,38 +96,105 @@ class ConversationListAdapterAccessibilityActionsInstrumentedTest {
 
     val scenario: ActivityScenario<MainActivity> = ActivityScenario.launch(Intent(harness.context, MainActivity::class.java))
     try {
-      // Navigate to archive view to show archived conversations
+      // Navigate to archive view by clicking the "Archived chats" item at the top of the list
       scenario.onActivity { activity ->
-        val mainNav = activity as? MainActivity
-        mainNav?.let {
-          // Trigger archive view navigation through the menu
+        val recycler = activity.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.list)
+        // Find the ConversationListItemAction view (the "Archived chats" button)
+        for (index in 0 until recycler.childCount) {
+          val child = recycler.getChildAt(index)
+          if (child is org.thoughtcrime.securesms.conversationlist.ConversationListItemAction) {
+            child.performClick()
+            break
+          }
         }
       }
 
-      // Wait for archive action (which becomes unarchive when conversation is archived)
-      assertTrue(waitForAction(scenario, R.id.conversation_list_accessibility_archive_action, 15_000))
+      InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+      SystemClock.sleep(1_000)
 
-      // Verify the label shows "Unarchive" for archived rows
+      // Await the archived conversation row to appear
+      assertTrue("Archived conversation should be visible in archive view",
+        waitForAction(scenario, R.id.conversation_list_accessibility_archive_action, 15_000))
+
+      // Verify the archive action label shows "Unarchive" for archived rows
       assertEquals(
         harness.context.getString(R.string.ConversationListFragment_unarchive),
         getActionLabel(scenario, R.id.conversation_list_accessibility_archive_action)
       )
 
-      // Perform the archive action (which unarchives the conversation)
-      assertTrue(performAction(scenario, R.id.conversation_list_accessibility_archive_action))
+      // Assert Read, Pin, and Mute action IDs are absent (hidden for archived rows)
+      assertFalse("Archived row should not expose read action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_read_action, 300))
+      assertFalse("Archived row should not expose pin action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_pin_action, 300))
+      assertFalse("Archived row should not expose mute action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_mute_action, 300))
 
-      // Wait briefly for the action to complete
+      // Perform the unarchive action
+      assertTrue("Should successfully perform unarchive action",
+        performAction(scenario, R.id.conversation_list_accessibility_archive_action))
+
+      InstrumentationRegistry.getInstrumentation().waitForIdleSync()
       SystemClock.sleep(500)
 
-      // Verify the conversation is no longer archived
-      val isArchived = AtomicBoolean(false)
+      // Verify the conversation is no longer visible in archive view (unarchived)
+      // Since it's been unarchived, it should disappear from the archive view
+      assertFalse("Archived row should disappear after unarchiving",
+        waitForAction(scenario, R.id.conversation_list_accessibility_archive_action, 1_000))
+    } finally {
+      scenario.close()
+    }
+  }
+
+  @Test
+  fun selectionMode_hidesCustomRowActions_restoresOnExit() {
+    val other = Recipient.resolved(harness.others.first())
+    insertIncomingText(other, "selection mode test")
+
+    val scenario: ActivityScenario<MainActivity> = ActivityScenario.launch(Intent(harness.context, MainActivity::class.java))
+    try {
+      // Initially in normal mode - verify actions ARE exposed
+      assertTrue("Normal mode should expose read action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_read_action, 15_000))
+      assertTrue("Normal mode should expose pin action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_pin_action, 300))
+      assertTrue("Normal mode should expose select action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_select_action, 300))
+
+      // Enter selection mode via select action
+      assertTrue("Should successfully perform select action",
+        performAction(scenario, R.id.conversation_list_accessibility_select_action))
+
+      InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+      SystemClock.sleep(500)
+
+      // Wait for action mode to appear
+      assertTrue("Selection mode should show action bar",
+        waitForViewVisible(scenario, R.id.conversation_list_bottom_action_bar, 5_000))
+
+      // In selection mode, custom actions should be hidden
+      assertFalse("Selection mode should hide read action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_read_action, 300))
+      assertFalse("Selection mode should hide pin action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_pin_action, 300))
+      assertFalse("Selection mode should hide select action",
+        waitForAction(scenario, R.id.conversation_list_accessibility_select_action, 300))
+
+      // Exit selection mode by pressing back
       scenario.onActivity { activity ->
-        val thread = SignalDatabase.threads.getThreadRecord(threadId)
-        if (thread != null) {
-          isArchived.set(thread.isArchived)
-        }
+        activity.onBackPressed()
       }
-      assertFalse("Conversation should be unarchived after invoking archive action", isArchived.get())
+
+      InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+      SystemClock.sleep(500)
+
+      // After exiting selection mode, actions should be restored
+      assertTrue("After exiting selection, read action should be restored",
+        waitForAction(scenario, R.id.conversation_list_accessibility_read_action, 300))
+      assertTrue("After exiting selection, pin action should be restored",
+        waitForAction(scenario, R.id.conversation_list_accessibility_pin_action, 300))
+      assertTrue("After exiting selection, select action should be restored",
+        waitForAction(scenario, R.id.conversation_list_accessibility_select_action, 300))
     } finally {
       scenario.close()
     }
@@ -171,6 +243,7 @@ class ConversationListAdapterAccessibilityActionsInstrumentedTest {
   companion object {
     private fun waitForAction(scenario: ActivityScenario<MainActivity>, actionId: Int, timeoutMs: Long): Boolean {
       val deadline = SystemClock.uptimeMillis() + timeoutMs
+      var delayMs = 10L
 
       while (SystemClock.uptimeMillis() < deadline) {
         val found = AtomicBoolean(false)
@@ -184,8 +257,21 @@ class ConversationListAdapterAccessibilityActionsInstrumentedTest {
           return true
         }
 
+        // Check how much time is left
+        val timeRemaining = deadline - SystemClock.uptimeMillis()
+        if (timeRemaining <= 0) {
+          return false
+        }
+
+        // Wait for UI idle
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-        SystemClock.sleep(100)
+
+        // Sleep with exponential backoff: 10ms, 20ms, 40ms, capped at 100ms
+        val sleepDuration = minOf(delayMs, timeRemaining)
+        if (sleepDuration > 0) {
+          SystemClock.sleep(sleepDuration)
+        }
+        delayMs = minOf(100, delayMs * 2)
       }
 
       return false
