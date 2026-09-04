@@ -1494,8 +1494,10 @@ public class ConversationListFragment extends MainFragment implements Conversati
         startActionMode();
         break;
       case ARCHIVE:
-      case UNARCHIVE:
         handleArchive(ids);
+        break;
+      case UNARCHIVE:
+        handleUnarchive(new HashSet<>(ids));
         break;
       case DELETE:
         handleDelete(ids, conversation.getThreadRecord().getRecipient().resolve().isActiveGroup());

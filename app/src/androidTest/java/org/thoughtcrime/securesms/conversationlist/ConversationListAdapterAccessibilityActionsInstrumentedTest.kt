@@ -81,6 +81,85 @@ class ConversationListAdapterAccessibilityActionsInstrumentedTest {
     }
   }
 
+  @Test
+  fun archivedConversationRow_unarchiveActionRestoresConversation() {
+    val other = Recipient.resolved(harness.others.first())
+    val threadId = insertIncomingText(other, "archived conversation test")
+
+    // Archive the conversation
+    SignalDatabase.threads.setArchived(setOf(threadId), true)
+
+    val scenario: ActivityScenario<MainActivity> = ActivityScenario.launch(Intent(harness.context, MainActivity::class.java))
+    try {
+      // Show all conversations (including archived)
+      scenario.onActivity { activity ->
+        // Navigate to show archived conversations
+        val listFragment = activity.supportFragmentManager.findFragmentByTag("ConversationListFragment")
+        // This would typically be done through UI interaction, but for testing we verify the action is available
+      }
+
+      // Wait for unarchive action to appear
+      assertTrue(waitForAction(scenario, R.id.conversation_list_accessibility_unarchive_action, 15_000))
+
+      // Verify unarchive action label
+      assertEquals(
+        harness.context.getString(R.string.ConversationListFragment_unarchive),
+        getActionLabel(scenario, R.id.conversation_list_accessibility_unarchive_action)
+      )
+
+      // Perform unarchive action
+      assertTrue(performAction(scenario, R.id.conversation_list_accessibility_unarchive_action))
+
+      // Wait briefly for the action to complete
+      SystemClock.sleep(500)
+
+      // Verify the conversation is no longer archived
+      val isArchived = AtomicBoolean(false)
+      scenario.onActivity { activity ->
+        val thread = SignalDatabase.threads.getThreadRecord(threadId)
+        if (thread != null) {
+          isArchived.set(thread.isArchived)
+        }
+      }
+      assertFalse("Conversation should be unarchived after invoking unarchive action", isArchived.get())
+    } finally {
+      scenario.close()
+    }
+  }
+
+      assertEquals(
+        harness.context.resources.getQuantityString(R.plurals.ConversationListFragment_read_plural, 1),
+        getActionLabel(scenario, R.id.conversation_list_accessibility_read_action)
+      )
+      assertEquals(
+        harness.context.getString(R.string.ConversationListFragment_pin),
+        getActionLabel(scenario, R.id.conversation_list_accessibility_pin_action)
+      )
+      assertEquals(
+        harness.context.getString(R.string.ConversationListFragment_mute),
+        getActionLabel(scenario, R.id.conversation_list_accessibility_mute_action)
+      )
+      assertEquals(
+        harness.context.getString(R.string.ConversationListFragment_select),
+        getActionLabel(scenario, R.id.conversation_list_accessibility_select_action)
+      )
+      assertEquals(
+        harness.context.getString(R.string.ConversationListFragment_archive),
+        getActionLabel(scenario, R.id.conversation_list_accessibility_archive_action)
+      )
+      assertEquals(
+        harness.context.getString(R.string.ConversationListFragment_delete),
+        getActionLabel(scenario, R.id.conversation_list_accessibility_delete_action)
+      )
+
+      assertTrue(performAction(scenario, R.id.conversation_list_accessibility_select_action))
+      assertTrue(waitForViewVisible(scenario, R.id.conversation_list_bottom_action_bar, 5_000))
+      assertFalse(waitForAction(scenario, R.id.conversation_list_accessibility_select_action, 1_500))
+    } finally {
+      scenario.close()
+    }
+  }
+
   private fun insertIncomingText(other: Recipient, body: String): Long {
     val now = System.currentTimeMillis()
     val message = IncomingMessage(
