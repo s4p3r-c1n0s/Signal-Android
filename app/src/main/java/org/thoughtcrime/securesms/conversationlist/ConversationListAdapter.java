@@ -222,93 +222,22 @@ class ConversationListAdapter extends ListAdapter<Conversation, RecyclerView.Vie
       @Override
       public void onInitializeAccessibilityNodeInfo(@NonNull View host, @NonNull AccessibilityNodeInfoCompat info) {
         super.onInitializeAccessibilityNodeInfo(host, info);
-
-        if (!selectedConversations.isEmpty()) {
-          return;
-        }
-
-        boolean isArchived = conversation.getThreadRecord().isArchived();
-
-        if (!isArchived) {
-          addAction(info,
-                    R.id.conversation_list_accessibility_read_action,
-                    conversation.getThreadRecord().isRead()
-                    ? host.getContext().getResources().getQuantityString(R.plurals.ConversationListFragment_unread_plural, 1)
-                    : host.getContext().getResources().getQuantityString(R.plurals.ConversationListFragment_read_plural, 1));
-
-          addAction(info,
-                    R.id.conversation_list_accessibility_pin_action,
-                    host.getContext().getString(conversation.getThreadRecord().isPinned()
-                                                ? R.string.ConversationListFragment_unpin
-                                                : R.string.ConversationListFragment_pin));
-
-          addAction(info,
-                    R.id.conversation_list_accessibility_mute_action,
-                    host.getContext().getString(conversation.getThreadRecord().getRecipient().live().get().isMuted()
-                                                ? R.string.ConversationListFragment_unmute
-                                                : R.string.ConversationListFragment_mute));
-        }
-
-        addAction(info,
-                  R.id.conversation_list_accessibility_select_action,
-                  host.getContext().getString(R.string.ConversationListFragment_select));
-
-        addAction(info,
-                  R.id.conversation_list_accessibility_archive_action,
-                  host.getContext().getString(isArchived
-                                              ? R.string.ConversationListFragment_unarchive
-                                              : R.string.ConversationListFragment_archive));
-
-        addAction(info,
-                  R.id.conversation_list_accessibility_delete_action,
-                  host.getContext().getString(R.string.ConversationListFragment_delete));
+        ConversationListAccessibilityHelper.addConversationActions(
+            info.unwrap(),
+            host.getContext(),
+            conversation,
+            !selectedConversations.isEmpty()
+        );
       }
 
       @Override
       public boolean performAccessibilityAction(@NonNull View host, int action, @Nullable Bundle args) {
         if (selectedConversations.isEmpty()) {
-          if (action == R.id.conversation_list_accessibility_read_action) {
-            onConversationClickListener.onConversationAccessibilityAction(conversation,
-                                                                          conversation.getThreadRecord().isRead() ? ThreadAccessibilityAction.MARK_AS_UNREAD : ThreadAccessibilityAction.MARK_AS_READ);
-            return true;
-          }
-
-          if (action == R.id.conversation_list_accessibility_pin_action) {
-            onConversationClickListener.onConversationAccessibilityAction(conversation,
-                                                                          conversation.getThreadRecord().isPinned() ? ThreadAccessibilityAction.UNPIN : ThreadAccessibilityAction.PIN);
-            return true;
-          }
-
-          if (action == R.id.conversation_list_accessibility_mute_action) {
-            onConversationClickListener.onConversationAccessibilityAction(conversation,
-                                                                          conversation.getThreadRecord().getRecipient().live().get().isMuted() ? ThreadAccessibilityAction.UNMUTE : ThreadAccessibilityAction.MUTE);
-            return true;
-          }
-
-          if (action == R.id.conversation_list_accessibility_select_action) {
-            onConversationClickListener.onConversationAccessibilityAction(conversation, ThreadAccessibilityAction.SELECT);
-            return true;
-          }
-
-          if (action == R.id.conversation_list_accessibility_archive_action) {
-            onConversationClickListener.onConversationAccessibilityAction(conversation,
-                                                                          conversation.getThreadRecord().isArchived() ? ThreadAccessibilityAction.UNARCHIVE : ThreadAccessibilityAction.ARCHIVE);
-            return true;
-          }
-
-          if (action == R.id.conversation_list_accessibility_delete_action) {
-            onConversationClickListener.onConversationAccessibilityAction(conversation, ThreadAccessibilityAction.DELETE);
-            return true;
-          }
+          return ConversationListAccessibilityHelper.dispatchConversationAction(action, conversation, onConversationClickListener);
         }
-
         return super.performAccessibilityAction(host, action, args);
       }
     });
-  }
-
-  private static void addAction(@NonNull AccessibilityNodeInfoCompat info, int actionId, @NonNull CharSequence label) {
-    info.addAction(new AccessibilityNodeInfoCompat.AccessibilityActionCompat(actionId, label));
   }
 
   @Override
