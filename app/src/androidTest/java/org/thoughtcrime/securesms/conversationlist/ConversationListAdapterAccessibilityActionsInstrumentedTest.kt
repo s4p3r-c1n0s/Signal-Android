@@ -40,7 +40,7 @@ class ConversationListAdapterAccessibilityActionsInstrumentedTest {
   val harness = SignalActivityRule(1, false)
 
   @Test
-  fun liveConversationRow_exposesActions_andSelectActionStartsSelectionMode() {
+  fun conversationRow_selectActionStartsSelectionMode() {
     val other = Recipient.resolved(harness.others.first())
     insertIncomingText(other, "conversation list accessibility test")
 
